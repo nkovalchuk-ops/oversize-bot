@@ -15,7 +15,9 @@ from config import BOT_TOKEN
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
+OWNER_ID = 676415698
 CHANNEL_ID = -1003981237494  # ВСТАВ СВІЙ ID КАНАЛУ
+
 DATA_FILE = "data.json"
 TIMEZONE = "Europe/Bratislava"
 
@@ -27,7 +29,8 @@ def load_data():
         data = {
             "vehicles": [],
             "users": [],
-            "dashboard_message_id": None
+            "dashboard_message_id": None,
+            "last_action": None
         }
         save_data(data)
         return data
@@ -39,7 +42,8 @@ def load_data():
         data = {
             "vehicles": old_data,
             "users": [],
-            "dashboard_message_id": None
+            "dashboard_message_id": None,
+            "last_action": None
         }
         save_data(data)
         return data
@@ -50,6 +54,8 @@ def load_data():
         old_data["users"] = []
     if "dashboard_message_id" not in old_data:
         old_data["dashboard_message_id"] = None
+    if "last_action" not in old_data:
+        old_data["last_action"] = None
 
     return old_data
 
@@ -83,6 +89,7 @@ def get_keyboard():
 
         builder.button(text=text, callback_data=f"toggle:{v['number']}")
 
+    builder.button(text="↩️ Відмінити останню дію", callback_data="undo:last")
     builder.adjust(1)
     return builder.as_markup()
 
@@ -132,6 +139,11 @@ async def update_dashboard():
         pass
 
 
+@dp.message(Command("myid"))
+async def myid_handler(message: Message):
+    await message.answer(f"Твій Telegram ID:\n{message.from_user.id}")
+
+
 @dp.message(Command("start"))
 async def start_handler(message: Message):
     register_user(message.from_user.id)
@@ -144,7 +156,8 @@ async def start_handler(message: Message):
         "/bulkadd — додати список машин\n"
         "/remove AA 342 CE — видалити машину\n"
         "/move AA 342 CE 1 — перемістити машину\n"
-        "/reset — скинути галочки"
+        "/reset — скинути галочки\n"
+        "/myid — показати Telegram ID"
     )
 
 
@@ -156,6 +169,10 @@ async def checklist_handler(message: Message):
 
 @dp.message(Command("dashboard"))
 async def dashboard_handler(message: Message):
+    if message.from_user.id != OWNER_ID:
+        await message.answer("⛔ Тільки owner може створити dashboard в каналі")
+        return
+
     data = load_data()
 
     msg = await bot.send_message(
@@ -327,6 +344,8 @@ async def reset_all():
         v["checked_by"] = None
         v["time"] = None
 
+    data["last_action"] = None
+
     save_data(data)
     await update_dashboard()
 
@@ -337,8 +356,38 @@ async def reset_handler(message: Message):
     await message.answer("🔄 Всі галочки скинуто")
 
 
+async def undo_last_action(callback: types.CallbackQuery):
+    data = load_data()
+    last_action = data.get("last_action")
+
+    if not last_action:
+        await callback.answer("Немає дії для відміни", show_alert=True)
+        return
+
+    number = last_action["number"]
+    previous_state = last_action["previous_state"]
+
+    for v in data["vehicles"]:
+        if v["number"] == number:
+            v["checked"] = previous_state["checked"]
+            v["checked_by"] = previous_state["checked_by"]
+            v["time"] = previous_state["time"]
+            break
+
+    data["last_action"] = None
+    save_data(data)
+
+    await callback.message.edit_reply_markup(reply_markup=get_keyboard())
+    await update_dashboard()
+    await callback.answer("Останню дію відмінено")
+
+
 @dp.callback_query()
 async def callback_handler(callback: types.CallbackQuery):
+    if callback.data == "undo:last":
+        await undo_last_action(callback)
+        return
+
     if not callback.data.startswith("toggle:"):
         return
 
@@ -350,6 +399,15 @@ async def callback_handler(callback: types.CallbackQuery):
 
     for v in data["vehicles"]:
         if v["number"] == number:
+            data["last_action"] = {
+                "number": number,
+                "previous_state": {
+                    "checked": v["checked"],
+                    "checked_by": v["checked_by"],
+                    "time": v["time"]
+                }
+            }
+
             if not v["checked"]:
                 v["checked"] = True
                 v["checked_by"] = user
@@ -358,6 +416,7 @@ async def callback_handler(callback: types.CallbackQuery):
                 v["checked"] = False
                 v["checked_by"] = None
                 v["time"] = None
+
             break
 
     save_data(data)
