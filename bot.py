@@ -1,5 +1,4 @@
 import asyncio
-import html
 import json
 import os
 from datetime import datetime
@@ -66,6 +65,7 @@ def clean_number(text):
 
 def register_user(user_id):
     data = load_data()
+
     if user_id not in data["users"]:
         data["users"].append(user_id)
         save_data(data)
@@ -76,12 +76,10 @@ def get_keyboard():
     builder = InlineKeyboardBuilder()
 
     for v in data["vehicles"]:
-        status = "✅" if v["checked"] else "⬜"
-
         if v["checked"]:
-            text = f"{status} {v['number']} — {v['checked_by']} {v['time']}"
+            text = f"✅ {v['number']} — {v['checked_by']} {v['time']}"
         else:
-            text = f"{status} {v['number']}"
+            text = f"⬜ {v['number']}"
 
         builder.button(text=text, callback_data=f"toggle:{v['number']}")
 
@@ -93,35 +91,28 @@ def dashboard_text():
     data = load_data()
     vehicles = data["vehicles"]
 
+    total = len(vehicles)
+    checked = sum(1 for v in vehicles if v["checked"])
     updated = datetime.now().strftime("%H:%M")
 
-    lines = []
-    lines.append("OVERSIZE FLEET")
-    lines.append(f"UPDATED: {updated}")
-    lines.append("")
-    lines.append("№  ST  VEHICLE     BY        TIME")
-    lines.append("------------------------------------")
+    text = "🚛 OVERSIZE FLEET STATUS\n"
+    text += "🟢 LIVE\n\n"
+    text += f"Оновлено: {updated}\n"
+    text += f"Прогрес: {checked}/{total}\n\n"
 
     if not vehicles:
-        lines.append("No vehicles")
-    else:
-        for i, v in enumerate(vehicles, start=1):
-            number = v["number"][:10].ljust(10)
+        text += "Список машин порожній"
+        return text
 
-            if v["checked"]:
-                status = "OK"
-                user = str(v["checked_by"] or "-")[:8].ljust(8)
-                time = str(v["time"] or "-").ljust(5)
-            else:
-                status = "--"
-                user = "-".ljust(8)
-                time = "-".ljust(5)
+    for i, v in enumerate(vehicles, start=1):
+        if v["checked"]:
+            text += f"{i}. 🟢 {v['number']}\n"
+            text += f"   👤 {v['checked_by']} • 🕐 {v['time']}\n\n"
+        else:
+            text += f"{i}. ⚪ {v['number']}\n"
+            text += "   — ще не звʼязались —\n\n"
 
-            lines.append(f"{i:02} {status}  {number} {user} {time}")
-
-    table = "\n".join(lines)
-
-    return "🚛 <b>OVERSIZE FLEET</b>\n\n<pre>" + html.escape(table) + "</pre>"
+    return text
 
 
 async def update_dashboard():
@@ -135,8 +126,7 @@ async def update_dashboard():
         await bot.edit_message_text(
             chat_id=CHANNEL_ID,
             message_id=msg_id,
-            text=dashboard_text(),
-            parse_mode="HTML"
+            text=dashboard_text()
         )
     except Exception:
         pass
@@ -170,8 +160,7 @@ async def dashboard_handler(message: Message):
 
     msg = await bot.send_message(
         chat_id=CHANNEL_ID,
-        text=dashboard_text(),
-        parse_mode="HTML"
+        text=dashboard_text()
     )
 
     data["dashboard_message_id"] = msg.message_id
