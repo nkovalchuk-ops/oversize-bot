@@ -1,0 +1,118 @@
+{
+  "vehicles": [
+    {
+      "number": "AA 342 CE",
+      "checked": false,
+      "checked_by": null,
+      "time": null
+    },
+    {
+      "number": "AA 689 XX",
+      "checked": false,
+      "checked_by": null,
+      "time": null
+    },
+    {
+      "number": "BS 740 BB",
+      "checked": false,
+      "checked_by": null,
+      "time": null
+    },
+    {
+      "number": "MI 710 FU",
+      "checked": false,
+      "checked_by": null,
+      "time": null
+    },
+    {
+      "number": "TV 009 EI",
+      "checked": false,
+      "checked_by": null,
+      "time": null
+    },
+    {
+      "number": "TV 051 EG",
+      "checked": false,
+      "checked_by": null,
+      "time": null
+    },
+    {
+      "number": "TV 482 EO",
+      "checked": false,
+      "checked_by": null,
+      "time": null
+    },
+    {
+      "number": "TV 527 ED",
+      "checked": false,
+      "checked_by": null,
+      "time": null
+    },
+    {
+      "number": "TV 657 EG",
+      "checked": false,
+      "checked_by": null,
+      "time": null
+    },
+    {
+      "number": "TV 717 DX",
+      "checked": false,
+      "checked_by": null,
+      "time": null
+    },
+    {
+      "number": "TV 818 EC",
+      "checked": false,
+      "checked_by": null,
+      "time": null
+    },
+    {
+      "number": "TV 898 EN",
+      "checked": false,
+      "checked_by": null,
+      "time": null
+    },
+    {
+      "number": "TV 975 DX",
+      "checked": false,
+      "checked_by": null,
+      "time": null
+    },
+    {
+      "number": "AO 1831 IB",
+      "checked": false,
+      "checked_by": null,
+      "time": null
+    },
+    {
+      "number": "AO 1871 IB",
+      "checked": false,
+      "checked_by": null,
+      "time": null
+    },
+    {
+      "number": "AO 2946 BC",
+      "checked": false,
+      "checked_by": null,
+      "time": null
+    },
+    {
+      "number": "AO 6139 BM",
+      "checked": false,
+      "checked_by": null,
+      "time": null
+    },
+    {
+      "number": "AO 7819 BM",
+      "checked": false,
+      "checked_by": null,
+      "time": null
+    }
+  ],
+  "users": [
+    676415698,
+    683035416,
+    1012903244
+  ],
+  "dashboard_message_id": 8
+}
