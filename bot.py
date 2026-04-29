@@ -1,4 +1,5 @@
 import asyncio
+import html
 import json
 import os
 from datetime import datetime
@@ -90,23 +91,37 @@ def get_keyboard():
 
 def dashboard_text():
     data = load_data()
+    vehicles = data["vehicles"]
 
-    text = "🚛 OVERSIZE FLEET\n\n"
-    text += f"Оновлено: {datetime.now().strftime('%H:%M')}\n\n"
+    updated = datetime.now().strftime("%H:%M")
 
-    if not data["vehicles"]:
-        text += "Список машин порожній"
-        return text
+    lines = []
+    lines.append("OVERSIZE FLEET")
+    lines.append(f"UPDATED: {updated}")
+    lines.append("")
+    lines.append("№  ST  VEHICLE     BY        TIME")
+    lines.append("------------------------------------")
 
-    for i, v in enumerate(data["vehicles"], start=1):
-        status = "✅" if v["checked"] else "⬜"
+    if not vehicles:
+        lines.append("No vehicles")
+    else:
+        for i, v in enumerate(vehicles, start=1):
+            number = v["number"][:10].ljust(10)
 
-        if v["checked"]:
-            text += f"{i}. {status} {v['number']} — {v['checked_by']} {v['time']}\n"
-        else:
-            text += f"{i}. {status} {v['number']}\n"
+            if v["checked"]:
+                status = "OK"
+                user = str(v["checked_by"] or "-")[:8].ljust(8)
+                time = str(v["time"] or "-").ljust(5)
+            else:
+                status = "--"
+                user = "-".ljust(8)
+                time = "-".ljust(5)
 
-    return text
+            lines.append(f"{i:02} {status}  {number} {user} {time}")
+
+    table = "\n".join(lines)
+
+    return "🚛 <b>OVERSIZE FLEET</b>\n\n<pre>" + html.escape(table) + "</pre>"
 
 
 async def update_dashboard():
@@ -120,7 +135,8 @@ async def update_dashboard():
         await bot.edit_message_text(
             chat_id=CHANNEL_ID,
             message_id=msg_id,
-            text=dashboard_text()
+            text=dashboard_text(),
+            parse_mode="HTML"
         )
     except Exception:
         pass
@@ -154,7 +170,8 @@ async def dashboard_handler(message: Message):
 
     msg = await bot.send_message(
         chat_id=CHANNEL_ID,
-        text=dashboard_text()
+        text=dashboard_text(),
+        parse_mode="HTML"
     )
 
     data["dashboard_message_id"] = msg.message_id
