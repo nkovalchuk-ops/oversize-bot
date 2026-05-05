@@ -17,7 +17,7 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
 OWNER_ID = 676415698
-CHANNEL_ID = -1001234567890  # ВСТАВ СВІЙ ID КАНАЛУ
+CHANNEL_ID = -1003981237494  # ВСТАВ СВІЙ ID КАНАЛУ
 
 DATA_FILE = "data.json"
 TIMEZONE = "Europe/Prague"
