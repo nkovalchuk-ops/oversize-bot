@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import Message
@@ -16,12 +17,17 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
 OWNER_ID = 676415698
-CHANNEL_ID = -1003981237494  # ВСТАВ СВІЙ ID КАНАЛУ
+CHANNEL_ID = -1001234567890  # ВСТАВ СВІЙ ID КАНАЛУ
 
 DATA_FILE = "data.json"
-TIMEZONE = "Europe/Bratislava"
+TIMEZONE = "Europe/Prague"
+LOCAL_TZ = ZoneInfo(TIMEZONE)
 
 scheduler = AsyncIOScheduler(timezone=TIMEZONE)
+
+
+def now_time():
+    return datetime.now(LOCAL_TZ).strftime("%H:%M")
 
 
 def load_data():
@@ -48,14 +54,10 @@ def load_data():
         save_data(data)
         return data
 
-    if "vehicles" not in old_data:
-        old_data["vehicles"] = []
-    if "users" not in old_data:
-        old_data["users"] = []
-    if "dashboard_message_id" not in old_data:
-        old_data["dashboard_message_id"] = None
-    if "last_action" not in old_data:
-        old_data["last_action"] = None
+    old_data.setdefault("vehicles", [])
+    old_data.setdefault("users", [])
+    old_data.setdefault("dashboard_message_id", None)
+    old_data.setdefault("last_action", None)
 
     return old_data
 
@@ -71,7 +73,6 @@ def clean_number(text):
 
 def register_user(user_id):
     data = load_data()
-
     if user_id not in data["users"]:
         data["users"].append(user_id)
         save_data(data)
@@ -100,11 +101,10 @@ def dashboard_text():
 
     total = len(vehicles)
     checked = sum(1 for v in vehicles if v["checked"])
-    updated = datetime.now().strftime("%H:%M")
 
     text = "🚛 OVERSIZE FLEET STATUS\n"
     text += "🟢 LIVE\n\n"
-    text += f"Оновлено: {updated}\n"
+    text += f"Оновлено: {now_time()}\n"
     text += f"Прогрес: {checked}/{total}\n\n"
 
     if not vehicles:
@@ -393,7 +393,7 @@ async def callback_handler(callback: types.CallbackQuery):
 
     number = callback.data.replace("toggle:", "")
     user = callback.from_user.first_name
-    now = datetime.now().strftime("%H:%M")
+    current_time = now_time()
 
     data = load_data()
 
@@ -411,7 +411,7 @@ async def callback_handler(callback: types.CallbackQuery):
             if not v["checked"]:
                 v["checked"] = True
                 v["checked_by"] = user
-                v["time"] = now
+                v["time"] = current_time
             else:
                 v["checked"] = False
                 v["checked_by"] = None
